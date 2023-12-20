@@ -1,10 +1,13 @@
 using System;
+using System.Diagnostics;
 
 namespace HashMethods
 {
     public class ChainHashing(int tableSize) : IHashMethod
     {
-        
+        private int collisions;
+        private Stopwatch stopwatch = new();
+
         internal class Node 
         {
             public int Key { get; set; }
@@ -20,6 +23,8 @@ namespace HashMethods
 
         public void Print()
         {
+            stopwatch.Start();
+
             for (int i = 0; i < table.Length; i++) {
                 var node = table[i];
                 Console.Write($"{i}: ");
@@ -31,6 +36,10 @@ namespace HashMethods
 
                 Console.WriteLine();
             }
+
+            stopwatch.Stop();
+            Console.WriteLine($"Print Executou em ${stopwatch.Elapsed.Milliseconds}ms");
+            stopwatch.Restart();
         }
 
         private int Hash(int key)
@@ -40,6 +49,9 @@ namespace HashMethods
 
         public void Insert(int key)
         {
+            collisions = 0;
+            stopwatch.Start();   
+
             var hash = Hash(key);
             var node = table[hash];
 
@@ -47,12 +59,20 @@ namespace HashMethods
                 table[hash] = new Node { Key = key };
             else {
                 while (node.Next != null)
+                {
                     node = node.Next;
-
+                    collisions += 1;
+                }
+                
                 node.Next = new Node { Key = key };
             }
 
+            stopwatch.Stop();
+
             Console.WriteLine($"Inserido \"{key}\" em {hash}");
+            Console.WriteLine($"Inserido em {stopwatch.Elapsed.Milliseconds}ms com um total de {collisions} colisões");
+
+            stopwatch.Restart();
         }
 
         public void Insert(string key)
@@ -63,16 +83,26 @@ namespace HashMethods
 
         public void Search(int key)
         {
+            collisions = 0;
+            stopwatch.Start();
+
             var hash = Hash(key);
             var node = table[hash];
 
-            while (node != null && node.Key != key)
+            while (node != null && node.Key != key) {
                 node = node.Next;
+                collisions += 1;
+            }
+            
+            stopwatch.Stop();
 
             if (node == null)
                 Console.WriteLine($"\"{key}\" não encontrado");
             else
                 Console.WriteLine($"\"{key}\" encontrado em {hash}");
+
+            Console.WriteLine($"Buscado em {stopwatch.Elapsed.Milliseconds}ms com um total de {collisions} colisões");
+            stopwatch.Restart();
         }
 
         public void Search(string key)
@@ -83,6 +113,10 @@ namespace HashMethods
 
         public void Remove(int key)
         {
+            stopwatch.Start();
+            collisions = 0;
+            bool found;
+
             var hash = Hash(key);
             var node = table[hash];
             var previous = table[hash];
@@ -90,19 +124,28 @@ namespace HashMethods
             while (node != null && node.Key != Math.Abs(key.GetHashCode())) {
                 previous = node;
                 node = node.Next;
+                collisions += 1;
             }
 
+            
             if (node == null || previous == null) {
-                Console.WriteLine($"\"{key}\" não encontrado");
-                return;
+                found = false;
+            } else {
+                found = true;
+                if (node == previous)
+                    table[hash] = node.Next ?? null;
+                else
+                    previous.Next = node.Next;
             }
 
-            if (node == previous)
-                table[hash] = node.Next ?? null;
+            stopwatch.Stop();
+            if (!found)
+                Console.WriteLine($"\"{key}\" não encontrado");
             else
-                previous.Next = node.Next;
+                Console.WriteLine($"\"{key}\" removido de {hash}");
 
-            Console.WriteLine($"\"{key}\" removido de {hash}");
+            stopwatch.Restart();
+            Console.WriteLine($"Removido em {stopwatch.Elapsed.Milliseconds}ms com um total de {collisions} colisões");
         }
 
         public void Remove(string key)
@@ -113,6 +156,10 @@ namespace HashMethods
 
         public void Restructure(int newTableSize)
         {
+            var restructureStopWatch = new Stopwatch();
+
+            restructureStopWatch.Start();
+
             var oldTable = table;
             table = new Node[newTableSize];
 
@@ -126,7 +173,10 @@ namespace HashMethods
                 }
             }
 
+            restructureStopWatch.Stop();
+            
             Console.WriteLine($"Tabela reestruturada para {newTableSize}");
+            Console.WriteLine($"Reestruturado em {stopwatch.Elapsed.Milliseconds}ms");
         }
 
         public void Clear()

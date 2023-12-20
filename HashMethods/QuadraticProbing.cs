@@ -1,7 +1,12 @@
-﻿namespace HashMethods
+﻿using System.Diagnostics;
+
+namespace HashMethods
 {
     public class QuadraticProbing(int tableSize): IHashMethod
     {
+        private Stopwatch stopwatch = new();
+        private int collisions = 0;
+
         private int[] table = new int[tableSize];
 
         public string GetHashName()
@@ -11,8 +16,14 @@
 
         public void Print()
         {
+            stopwatch.Start();
+
             for (int i = 0; i < table.Length; i++)
                 Console.WriteLine($"{i}: {table[i]}");
+
+            stopwatch.Stop();
+            Console.WriteLine($"Print Executou em ${stopwatch.Elapsed.Milliseconds}ms");
+            stopwatch.Restart();
         }
 
         private int Hash(int key)
@@ -22,6 +33,9 @@
 
         public void Insert(int key)
         {
+            collisions = 0;
+            stopwatch.Start();
+            
             var hash = Hash(key);
 
             if (table[hash] == 0)
@@ -32,12 +46,18 @@
                 while (table[hash] != 0) {
                     hash = (hash + i * i) % table.Length;
                     i++;
+                    collisions += 1;
                 }
 
                 table[hash] = key;
             }
 
+            stopwatch.Stop();
+
             Console.WriteLine($"Inserido \"{key}\" em {hash}");
+            Console.WriteLine($"Inserido em {stopwatch.Elapsed.Milliseconds}ms com um total de {collisions} colisões");
+
+            stopwatch.Restart();
         }
 
         public void Insert(string key)
@@ -48,6 +68,8 @@
 
         public void Remove(int key)
         {
+            stopwatch.Start();
+            collisions = 0;
             var hash = Hash(key);
 
             if (table[hash] == key)
@@ -58,12 +80,16 @@
                 while (table[hash] != key) {
                     hash = (hash + i * i) % table.Length;
                     i++;
+                    collisions += 1;
                 }
 
                 table[hash] = 0;
             }
 
+            stopwatch.Stop();
             Console.WriteLine($"Removido \"{key}\" de {hash}");
+            Console.WriteLine($"Removido em {stopwatch.Elapsed.Milliseconds}ms com um total de {collisions} colisões");
+            stopwatch.Restart();
         }
 
         public void Remove(string key)
@@ -74,6 +100,9 @@
 
         public void Search(int key)
         {
+            collisions = 0;
+            stopwatch.Start();
+
             var hash = Hash(key);
 
             if (table[hash] == key)
@@ -84,10 +113,15 @@
                 while (table[hash] != key) {
                     hash = (hash + i * i) % table.Length;
                     i++;
+                    collisions += 1;
                 }
 
                 Console.WriteLine($"\"{key}\" encontrado em {hash}");
             }
+
+            stopwatch.Stop();
+            Console.WriteLine($"Buscado em {stopwatch.Elapsed.Milliseconds}ms com um total de {collisions} colisões");
+            stopwatch.Restart();
         }
 
         public void Search(string key)
@@ -98,6 +132,10 @@
 
         public void Restructure(int newTableSize)
         {
+            collisions = 0;
+            var restructureStopWatch = new Stopwatch();
+            restructureStopWatch.Start();
+
             var oldTable = table;
             table = new int[newTableSize];
 
@@ -111,12 +149,16 @@
                 while (table[hash] != 0) {
                     hash = (hash + j * j) % table.Length;
                     j++;
+                    collisions += 1;
                 }
 
                 table[hash] = oldTable[i];
             }
-
+            
+            restructureStopWatch.Stop();
+            
             Console.WriteLine($"Tabela reestruturada para {newTableSize}");
+            Console.WriteLine($"Reestruturado em {stopwatch.Elapsed.Milliseconds}ms com {collisions} colisões");
         }
 
         public void Clear()
